@@ -21,16 +21,19 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity
 {
 
-    private final String LOG_TAG = "MainActivity";
+    private final static String LOG_TAG = MainActivity.class.getSimpleName();
+    private String location;
+    private final static String FORECASTFRAGMENT_TAG = "forcastFragment";
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
+        location = PreferenceManager.getDefaultSharedPreferences(this).getString(getResources().getString(R.string.pref_postcode_key), getResources().getString(R.string.pref_postcode_default));
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener()
         {
@@ -76,13 +79,14 @@ public class MainActivity extends AppCompatActivity
                 List<Address> addresses = geocoder.getFromLocationName(postcode, 1);
                 if (addresses != null && !addresses.isEmpty())
                 {
-                    Log.v(LOG_TAG,addresses.get(0).toString());
+                    Log.v(LOG_TAG, addresses.get(0).toString());
                     lat = addresses.get(0).getLatitude();
                     lon = addresses.get(0).getLongitude();
-                    String uriString = "geo:"+lat+","+lon+"?z=12";
+                    String uriString = "geo:" + lat + "," + lon + "?z=12";
                     Intent intent = new Intent(Intent.ACTION_VIEW);
                     intent.setData(Uri.parse(uriString));
-                    if (intent.resolveActivity(getPackageManager()) != null) {
+                    if (intent.resolveActivity(getPackageManager()) != null)
+                    {
                         startActivity(intent);
                     }
                 }
@@ -93,7 +97,7 @@ public class MainActivity extends AppCompatActivity
             }
             catch (IOException e)
             {
-                Log.e(LOG_TAG,e.getMessage(),e);
+                Log.e(LOG_TAG, e.getMessage(), e);
             }
             catch (Exception e)
             {
@@ -102,5 +106,23 @@ public class MainActivity extends AppCompatActivity
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onResume()
+    {
+        super.onResume();
+        if (!location.equals(Utility.getPreferredLocation(this)))
+        {
+            MainActivityFragment ff = (MainActivityFragment) getSupportFragmentManager().findFragmentByTag(FORECASTFRAGMENT_TAG);
+            onLocationChanged(ff);
+            location = Utility.getPreferredLocation(this);
+        }
+    }
+
+    public void onLocationChanged(MainActivityFragment ff)
+    {
+        ff.updateWeather();
+        ff.getLoaderManager().restartLoader(MainActivityFragment.FORECAST_LOADER_ID, null, ff);
     }
 }

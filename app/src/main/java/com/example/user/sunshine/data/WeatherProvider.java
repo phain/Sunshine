@@ -294,7 +294,10 @@ public class WeatherProvider extends ContentProvider
         // the uri listeners (using the content resolver) if the rowsDeleted != 0 or the selection
         // is null.
         // Oh, and you should notify the listeners here.
-        getContext().getContentResolver().notifyChange(uri, null);
+        if (rowsModified != 0)
+        {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
         db.close();
         // Student: return the actual rows deleted
         return rowsModified;
@@ -334,6 +337,11 @@ public class WeatherProvider extends ContentProvider
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
+        if (rowsModified != 0)
+        {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
+        db.close();
         return rowsModified;
     }
 
@@ -365,6 +373,7 @@ public class WeatherProvider extends ContentProvider
                     db.endTransaction();
                 }
                 getContext().getContentResolver().notifyChange(uri, null);
+
                 return returnCount;
             default:
                 return super.bulkInsert(uri, values);

@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:xliff="http://schemas.android.com/apk/res-auto">
     <string name="app_name">Sunshine</string>
     <string name="title_activity_details">Details</string>
     <string name="title_activity_settings">Settings</string>
@@ -22,13 +22,35 @@
     <string name="pref_units_label_metric">Metric</string>
     <string name="pref_units_label_imperial">Imperial</string>
 
-
-
     <string name="pref_units_key" translatable="false">units</string>
     <string name="pref_units_metric" translatable="false">metric</string>
 
     <string name="pref_units_imperial" translatable="false">imperial</string>
 
     <string name="pref_postcode_key" translatable="false">postcode</string>
+
+    <!-- Date label when displaying today's weather forecast [CHAR LIMIT=20] -->
+    <string name="today">ma</string>
+
+    <!-- Date label when displaying tomorrow's weather forecast [CHAR LIMIT=20] -->
+    <string name="tomorrow">holnap</string>
+
+    <!-- Date format for displaying day of week and date (i.e. Mon Jun 1) [CHAR LIMIT=20] -->
+    <string name="format_full_friendly_date"><xliff:g id="day">%1$s</xliff:g>, <xliff:g id="date">%2$s</xliff:g></string>
+
+    <!-- Temperature format for displaying ° -->
+    <string name="format_temperature_units"><xliff:g id="temperature_value">%1.0f</xliff:g>\u00B0</string>
+
+    <!-- Humidity format for displaying humidity percentage (i.e. 84%) -->
+    <string name="format_humidity">Páratartalom: <xliff:g id="humidity">%1.0f</xliff:g>%\u0025</string>
+
+    <!-- Wind format for displaying metric wind speed and direction (i.e. 7 km/h SE -->
+    <string name="format_wind_kmh">Szél: <xliff:g id="wind_speed">%1.0f</xliff:g> km/h <xliff:g id="wind_direction">%2$s</xliff:g></string>
+
+    <!-- Wind format for displaying imperial wind speed and direction (i.e. 7 m/h SE -->
+    <string name="format_wind_mph">Szél: <xliff:g id="wind_speed">%1.0f</xliff:g> m/h <xliff:g id="wind_direction">%2$s</xliff:g></string>
+
+    <!-- Pressure format for displaying pressure in hPa -->
+    <string name="format_pressure">Légnyomás: <xliff:g id="ressure_value">%1.0f</xliff:g> hPa</string>
 
 </resources>
