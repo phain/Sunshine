@@ -1,13 +1,18 @@
 package com.example.user.sunshine;
 
+import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.Intent;
 import android.location.Address;
 import android.location.Geocoder;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -15,15 +20,19 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.example.user.sunshine.data.WeatherContract;
+
 import java.io.IOException;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity
+public class MainActivity extends AppCompatActivity implements WeatherDetailCallback
 {
 
     private final static String LOG_TAG = MainActivity.class.getSimpleName();
     private String location;
-    private final static String FORECASTFRAGMENT_TAG = "forcastFragment";
+    private final static String FORECASTFRAGMENT_TAG = "FFTAG";
+    private static final String DETAILFRAGMENT_TAG = "DFTAG";
+    private boolean twoPane;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -34,16 +43,30 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         location = PreferenceManager.getDefaultSharedPreferences(this).getString(getResources().getString(R.string.pref_postcode_key), getResources().getString(R.string.pref_postcode_default));
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener()
+
+        if (findViewById(R.id.weather_detail_container) != null)
         {
-            @Override
-            public void onClick(View view)
+            twoPane = true;
+            if (savedInstanceState == null)
             {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                getSupportFragmentManager().beginTransaction().replace(R.id.weather_detail_container, new DetailsActivityFragment(), DETAILFRAGMENT_TAG).commit();
             }
-        });
+        }
+        else
+        {
+            twoPane = false;
+            FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+            fab.setOnClickListener(new View.OnClickListener()
+            {
+                @Override
+                public void onClick(View view)
+                {
+                    Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                            .setAction("Action", null).show();
+                }
+            });
+        }
+
     }
 
     @Override
@@ -114,9 +137,13 @@ public class MainActivity extends AppCompatActivity
         super.onResume();
         if (!location.equals(Utility.getPreferredLocation(this)))
         {
-            MainActivityFragment ff = (MainActivityFragment) getSupportFragmentManager().findFragmentByTag(FORECASTFRAGMENT_TAG);
-            onLocationChanged(ff);
+            MainActivityFragment ff = (MainActivityFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_forecast);
+            Log.v(LOG_TAG, "fragment exists: " + (ff != null));
             location = Utility.getPreferredLocation(this);
+            if (ff != null)
+            {
+                onLocationChanged(ff);
+            }
         }
     }
 
@@ -124,5 +151,33 @@ public class MainActivity extends AppCompatActivity
     {
         ff.updateWeather();
         ff.getLoaderManager().restartLoader(MainActivityFragment.FORECAST_LOADER_ID, null, ff);
+        if(twoPane)
+        {
+            DetailsActivityFragment df = (DetailsActivityFragment)getSupportFragmentManager().findFragmentByTag(DETAILFRAGMENT_TAG);
+            df.onLocationChanged(location);
+        }
+    }
+
+    @Override
+    public void onItemSelected(Uri url)
+    {
+        if (twoPane)
+        {
+            DetailsActivityFragment df = DetailsActivityFragment.createNewInstance(url);
+            getSupportFragmentManager().beginTransaction().replace(R.id.weather_detail_container,df,DETAILFRAGMENT_TAG).commit();
+        }
+        else
+        {
+            Intent intent = new Intent(this, DetailsActivity.class)
+                    .setData(url);
+            startActivity(intent);
+        }
+    }
+
+    //@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    @Override
+    public Intent getParentActivityIntent()
+    {
+        return super.getParentActivityIntent().addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
     }
 }

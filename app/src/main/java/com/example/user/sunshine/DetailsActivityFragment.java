@@ -22,14 +22,13 @@ import android.widget.TextView;
 
 import com.example.user.sunshine.data.WeatherContract;
 
-/**
- * A placeholder fragment containing a simple view.
- */
+
 public class DetailsActivityFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>
 {
     public final static int DETAILS_LOADER_ID = 1;
 
     private final static String LOG_TAG = DetailsActivityFragment.class.getSimpleName();
+    public static final String DETAIL_URI = "detail_uri";
     private ShareActionProvider shareActionProvider;
     private String forecastData;
     private String forecastString;
@@ -45,17 +44,17 @@ public class DetailsActivityFragment extends Fragment implements LoaderManager.L
     TextView pressureView;
 
     private static final String[] FORECAST_COLUMNS = {
-                            WeatherContract.WeatherEntry.TABLE_NAME + "." + WeatherContract.WeatherEntry._ID,
-                            WeatherContract.WeatherEntry.COLUMN_DATE,
-                            WeatherContract.WeatherEntry.COLUMN_SHORT_DESC,
-                            WeatherContract.WeatherEntry.COLUMN_WEATHER_ID,
-                            WeatherContract.WeatherEntry.COLUMN_MAX_TEMP,
-                            WeatherContract.WeatherEntry.COLUMN_MIN_TEMP,
-                            WeatherContract.WeatherEntry.COLUMN_HUMIDITY,
-                            WeatherContract.WeatherEntry.COLUMN_WIND_SPEED,
-                            WeatherContract.WeatherEntry.COLUMN_DEGREES,
-                            WeatherContract.WeatherEntry.COLUMN_PRESSURE
-                        };
+            WeatherContract.WeatherEntry.TABLE_NAME + "." + WeatherContract.WeatherEntry._ID,
+            WeatherContract.WeatherEntry.COLUMN_DATE,
+            WeatherContract.WeatherEntry.COLUMN_SHORT_DESC,
+            WeatherContract.WeatherEntry.COLUMN_WEATHER_ID,
+            WeatherContract.WeatherEntry.COLUMN_MAX_TEMP,
+            WeatherContract.WeatherEntry.COLUMN_MIN_TEMP,
+            WeatherContract.WeatherEntry.COLUMN_HUMIDITY,
+            WeatherContract.WeatherEntry.COLUMN_WIND_SPEED,
+            WeatherContract.WeatherEntry.COLUMN_DEGREES,
+            WeatherContract.WeatherEntry.COLUMN_PRESSURE
+    };
 
     // these constants correspond to the projection defined above, and must change if the
     // projection changes
@@ -70,15 +69,29 @@ public class DetailsActivityFragment extends Fragment implements LoaderManager.L
     private static final int COL_WEATHER_WIND_DIR = 8;
     private static final int COL_WEATHER_PRESSURE = 9;
 
+    public static DetailsActivityFragment createNewInstance(Uri url)
+    {
+        DetailsActivityFragment df = new DetailsActivityFragment();
+        Bundle args = new Bundle();
+        args.putParcelable(DETAIL_URI,url);
+        df.setArguments(args);
+        return df;
+    }
+
     public DetailsActivityFragment()
     {
+    }
+
+    public String getDetailsUri()
+    {
+        return getArguments().getParcelable(DETAIL_URI).toString();
     }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState)
     {
         super.onActivityCreated(savedInstanceState);
-        getLoaderManager().initLoader(DETAILS_LOADER_ID,savedInstanceState, this);
+        getLoaderManager().initLoader(DETAILS_LOADER_ID, savedInstanceState, this);
     }
 
     @Override
@@ -87,22 +100,19 @@ public class DetailsActivityFragment extends Fragment implements LoaderManager.L
     {
         View rootView = inflater.inflate(R.layout.fragment_details, container, false);
 
-        dayView = (TextView)rootView.findViewById(R.id.details_day);
-        dateView = (TextView)rootView.findViewById(R.id.details_date);
-        highTempView = (TextView)rootView.findViewById(R.id.details_temp_high);
-        lowTempView = (TextView)rootView.findViewById(R.id.details_temp_low);
-        iconView = (ImageView)rootView.findViewById(R.id.details_icon);
-        weatherDescView = (TextView)rootView.findViewById(R.id.details_weather_desc);
-        humidityView = (TextView)rootView.findViewById(R.id.details_weather_hum);
-        windView = (TextView)rootView.findViewById(R.id.details_weather_wind);
-        pressureView = (TextView)rootView.findViewById(R.id.details_weather_pressure);
-
-        if (getActivity().getIntent() != null) {
-            forecastString = getActivity().getIntent().getDataString();
-        }
+        dayView = (TextView) rootView.findViewById(R.id.details_day);
+        dateView = (TextView) rootView.findViewById(R.id.details_date);
+        highTempView = (TextView) rootView.findViewById(R.id.details_temp_high);
+        lowTempView = (TextView) rootView.findViewById(R.id.details_temp_low);
+        iconView = (ImageView) rootView.findViewById(R.id.details_icon);
+        weatherDescView = (TextView) rootView.findViewById(R.id.details_weather_desc);
+        humidityView = (TextView) rootView.findViewById(R.id.details_weather_hum);
+        windView = (TextView) rootView.findViewById(R.id.details_weather_wind);
+        pressureView = (TextView) rootView.findViewById(R.id.details_weather_pressure);
 
         return rootView;
     }
+
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -118,7 +128,7 @@ public class DetailsActivityFragment extends Fragment implements LoaderManager.L
         MenuItem item = menu.findItem(R.id.menu_item_share);
         shareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(item);
 
-        if(forecastData != null)
+        if (forecastData != null)
         {
             setShareIntent(createShareIntent());
         }
@@ -142,16 +152,32 @@ public class DetailsActivityFragment extends Fragment implements LoaderManager.L
         return shareIntent;
     }
 
+    void onLocationChanged( String newLocation ) {
+        // replace the uri, since the location has changed
+
+        if (forecastString != null) {
+            long date = WeatherContract.WeatherEntry.getDateFromUri(Uri.parse(forecastString));
+            forecastString = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(newLocation, date).toString();
+            getLoaderManager().restartLoader(DETAILS_LOADER_ID, null, this);
+        }
+    }
+
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args)
     {
-        return new CursorLoader(getActivity(), getActivity().getIntent().getData(), FORECAST_COLUMNS, null, null, null);
+            if(getArguments() == null)
+            {
+                forecastString = null;
+                return null;
+            }
+            forecastString = getDetailsUri();
+            return new CursorLoader(getActivity(),Uri.parse(forecastString),FORECAST_COLUMNS,null,null,null);
     }
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data)
     {
-        if(!data.moveToFirst())
+        if (!data.moveToFirst())
         {
             return;
         }
@@ -164,12 +190,12 @@ public class DetailsActivityFragment extends Fragment implements LoaderManager.L
         weatherDescView.setText(data.getString(COL_WEATHER_DESC));
         humidityView.setText(Utility.formatHumidity(getActivity(), data.getDouble(COL_WEATHER_HUM)));
         windView.setText(Utility.formatWind(getActivity(), data.getDouble(COL_WEATHER_WIND_SPEED), data.getDouble(COL_WEATHER_WIND_DIR)));
-        pressureView.setText(Utility.formatPressure(getActivity(),data.getDouble(COL_WEATHER_PRESSURE)));
+        pressureView.setText(Utility.formatPressure(getActivity(), data.getDouble(COL_WEATHER_PRESSURE)));
 
         forecastData = Utility.formatDate(data.getLong(COL_WEATHER_DATE));
         forecastData += " - " + data.getString(COL_WEATHER_DESC);
         forecastData += " - " + Utility.formatTemperature(data.getDouble(COL_WEATHER_MAX_TEMP), Utility.isMetric(getActivity()));
-        forecastData += "/" + Utility.formatTemperature(data.getDouble(COL_WEATHER_MIN_TEMP),Utility.isMetric(getActivity()));
+        forecastData += "/" + Utility.formatTemperature(data.getDouble(COL_WEATHER_MIN_TEMP), Utility.isMetric(getActivity()));
 
         setShareIntent(createShareIntent());
 

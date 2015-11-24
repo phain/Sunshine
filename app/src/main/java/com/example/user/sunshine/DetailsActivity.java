@@ -6,6 +6,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -14,12 +15,22 @@ import android.view.View;
 public class DetailsActivity extends AppCompatActivity
 {
 
+    private static final String DETAILFRAGMENT_TAG = "DFTAG";
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_details);
+
+        if(savedInstanceState == null)
+        {
+            Bundle args = new Bundle();
+            args.putParcelable(DetailsActivityFragment.DETAIL_URI, getIntent().getData());
+            DetailsActivityFragment df = DetailsActivityFragment.createNewInstance(getIntent().getData());
+            getSupportFragmentManager().beginTransaction().add(R.id.weather_detail_container,df,DETAILFRAGMENT_TAG).commit();
+        }
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 

@@ -15,7 +15,6 @@
  */
 package com.example.user.sunshine.data;
 
-import android.annotation.TargetApi;
 import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.content.UriMatcher;
@@ -23,6 +22,10 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
+import android.os.Build;
+import android.util.Log;
+
+import com.example.user.sunshine.MainActivityFragment;
 
 public class WeatherProvider extends ContentProvider
 {
@@ -70,6 +73,7 @@ public class WeatherProvider extends ContentProvider
                     "." + WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING + " = ? AND " +
                     WeatherContract.WeatherEntry.COLUMN_DATE + " = ? ";
 
+
     private Cursor getWeatherByLocationSetting(Uri uri, String[] projection, String sortOrder)
     {
         String locationSetting = WeatherContract.WeatherEntry.getLocationSettingFromUri(uri);
@@ -88,7 +92,6 @@ public class WeatherProvider extends ContentProvider
             selectionArgs = new String[]{locationSetting, Long.toString(startDate)};
             selection = sLocationSettingWithStartDateSelection;
         }
-
         return sWeatherByLocationSettingQueryBuilder.query(mOpenHelper.getReadableDatabase(),
                 projection,
                 selection,
@@ -215,6 +218,7 @@ public class WeatherProvider extends ContentProvider
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
         retCursor.setNotificationUri(getContext().getContentResolver(), uri);
+
         return retCursor;
     }
 
@@ -378,16 +382,5 @@ public class WeatherProvider extends ContentProvider
             default:
                 return super.bulkInsert(uri, values);
         }
-    }
-
-    // You do not need to call this method. This is a method specifically to assist the testing
-    // framework in running smoothly. You can read more at:
-    // http://developer.android.com/reference/android/content/ContentProvider.html#shutdown()
-    @Override
-    @TargetApi(11)
-    public void shutdown()
-    {
-        mOpenHelper.close();
-        super.shutdown();
     }
 }

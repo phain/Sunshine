@@ -228,7 +228,6 @@ public class FetchWeatherTask extends AsyncTask<String, Void, Void>
                 weatherValues.put(WeatherEntry.COLUMN_MIN_TEMP, low);
                 weatherValues.put(WeatherEntry.COLUMN_SHORT_DESC, description);
                 weatherValues.put(WeatherEntry.COLUMN_WEATHER_ID, weatherId);
-
                 cVVector.add(weatherValues);
             }
             int inserted = 0;
@@ -259,6 +258,7 @@ public class FetchWeatherTask extends AsyncTask<String, Void, Void>
             return null;
         }
         String locationQuery = params[0];
+        String locationCode = locationQuery + params[1];
 
         // These two need to be declared outside the try/catch
         // so that they can be closed in the finally block.
@@ -286,12 +286,12 @@ public class FetchWeatherTask extends AsyncTask<String, Void, Void>
             final String APPID_PARAM = "appid";
 
             Uri builtUri = Uri.parse(FORECAST_BASE_URL).buildUpon()
-                    .appendQueryParameter(QUERY_PARAM, params[0])
+                    .appendQueryParameter(QUERY_PARAM, locationCode)
                     .appendQueryParameter(FORMAT_PARAM, format)
                     .appendQueryParameter(UNITS_PARAM, units)
                     .appendQueryParameter(DAYS_PARAM, Integer.toString(numDays))
                     .appendQueryParameter(APPID_PARAM, API_KEY)
-            .build();
+                    .build();
 
             Log.v(LOG_TAG, builtUri.toString());
             URL url = new URL(builtUri.toString());
