@@ -22,10 +22,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
-import android.os.Build;
 import android.util.Log;
-
-import com.example.user.sunshine.MainActivityFragment;
 
 public class WeatherProvider extends ContentProvider
 {

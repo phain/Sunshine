@@ -184,8 +184,8 @@ public class DetailsActivityFragment extends Fragment implements LoaderManager.L
 
         dayView.setText(Utility.getDayName(getActivity(), data.getLong(COL_WEATHER_DATE)));
         dateView.setText(Utility.getFormattedMonthDay(getActivity(), data.getLong(COL_WEATHER_DATE)));
-        highTempView.setText(Utility.formatTemperature(getActivity(), data.getDouble(COL_WEATHER_MAX_TEMP), Utility.isMetric(getActivity())));
-        lowTempView.setText(Utility.formatTemperature(getActivity(), data.getDouble(COL_WEATHER_MIN_TEMP), Utility.isMetric(getActivity())));
+        highTempView.setText(Utility.formatTemperature(getActivity(), data.getDouble(COL_WEATHER_MAX_TEMP)));
+        lowTempView.setText(Utility.formatTemperature(getActivity(), data.getDouble(COL_WEATHER_MIN_TEMP)));
         iconView.setImageResource(Utility.getArtResourceForWeatherCondition(data.getInt(COL_WEATHER_CONDITION_ID)));
         weatherDescView.setText(data.getString(COL_WEATHER_DESC));
         humidityView.setText(Utility.formatHumidity(getActivity(), data.getDouble(COL_WEATHER_HUM)));

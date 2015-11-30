@@ -1,5 +1,6 @@
 package com.example.user.sunshine;
 
+import android.os.AsyncTask;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v4.content.CursorLoader;
@@ -18,13 +19,17 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.example.user.sunshine.data.WeatherContract;
+import com.example.user.sunshine.sync.SunshineSyncAdapter;
 
 
 public class MainActivityFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>
 {
     public final static int FORECAST_LOADER_ID = 0;
+    public final static String POSITION_KEY = "position";
     public final static String LOG_TAG = MainActivityFragment.class.getSimpleName();
-    ForecastAdapter forecastAdapter;
+    private ForecastAdapter forecastAdapter;
+    private int mPosition = -1;
+    private ListView listView;
 
     private static final String[] FORECAST_COLUMNS = {
             // In this case the id needs to be fully qualified with a table name, since
@@ -55,6 +60,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     public static final int COL_WEATHER_CONDITION_ID = 6;
     public static final int COL_COORD_LAT = 7;
     public static final int COL_COORD_LONG = 8;
+    private boolean useSpecialLayout;
 
 
     public MainActivityFragment()
@@ -70,7 +76,7 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
         String sortOrder = WeatherContract.WeatherEntry.COLUMN_DATE + " ASC";
         Uri weatherForLocationUri = WeatherContract.WeatherEntry.buildWeatherLocationWithStartDate(
                 locationSetting, System.currentTimeMillis());
-        return new CursorLoader(getActivity(),weatherForLocationUri, FORECAST_COLUMNS, null, null, sortOrder);
+        return new CursorLoader(getActivity(), weatherForLocationUri, FORECAST_COLUMNS, null, null, sortOrder);
 
     }
 
@@ -84,6 +90,30 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     public void onLoadFinished(Loader<Cursor> loader, Cursor data)
     {
         forecastAdapter.swapCursor(data);
+        if (mPosition >= 0)
+        {
+            listView.smoothScrollToPosition(mPosition);
+        }
+        if (!useSpecialLayout && mPosition == -1)
+        {
+            mPosition = 0;
+            new AsyncTask<Void, Void, Void>()
+            {
+                @Override
+                protected Void doInBackground(Void... params)
+                {
+                    return null;
+                }
+
+                @Override
+                protected void onPostExecute(Void aVoid)
+                {
+                    listView.performItemClick(listView.getChildAt(mPosition), mPosition, listView.getItemIdAtPosition(mPosition));
+                    super.onPostExecute(aVoid);
+                }
+            }.execute();
+        }
+
     }
 
     @Override
@@ -97,7 +127,9 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater)
     {
         if (menu.findItem(R.id.action_refresh) == null)
-        inflater.inflate(R.menu.forcast_fragment, menu);
+        {
+            inflater.inflate(R.menu.forcast_fragment, menu);
+        }
     }
 
 
@@ -124,14 +156,17 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState)
     {
-
+        if (savedInstanceState != null && savedInstanceState.containsKey(POSITION_KEY))
+        {
+            mPosition = savedInstanceState.getInt(POSITION_KEY);
+        }
         forecastAdapter = new ForecastAdapter(getActivity(), null, 0);
+        forecastAdapter.setUseSpecialViewType(useSpecialLayout);
 
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
 
-
-        ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
+        listView = (ListView) rootView.findViewById(R.id.listview_forecast);
         listView.setAdapter(forecastAdapter);
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener()
@@ -143,24 +178,44 @@ public class MainActivityFragment extends Fragment implements LoaderManager.Load
                 // CursorAdapter returns a cursor at the correct position for getItem(), or null
                 // if it cannot seek to that position.
                 Cursor cursor = (Cursor) adapterView.getItemAtPosition(position);
-                if (cursor != null)
+                if (cursor != null && cursor.moveToFirst())
                 {
+                    mPosition = position;
                     WeatherDetailCallback wdc = (WeatherDetailCallback) getActivity();
-
                     String locationSetting = Utility.getPreferredLocation(getActivity());
                     wdc.onItemSelected(WeatherContract.WeatherEntry.buildWeatherLocationWithDate(locationSetting, cursor.getLong(COL_WEATHER_DATE)));
                 }
             }
         });
+
         return rootView;
     }
 
 
+    @Override
+    public void onSaveInstanceState(Bundle outState)
+    {
+        outState.putInt(POSITION_KEY, mPosition);
+        super.onSaveInstanceState(outState);
+    }
 
-    public void updateWeather() {
-        FetchWeatherTask weatherTask = new FetchWeatherTask(getActivity());
-        String location = Utility.getPreferredLocation(getActivity());
-        weatherTask.execute(location,",HU");
+    public void updateWeather()
+    {
+//        Bundle syncSettingsBundle = new Bundle();
+//        syncSettingsBundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+//        syncSettingsBundle.putString(SunshineSyncAdapter.LOCATION_QUERY_EXTRA, Utility.getPreferredLocation(getActivity()));
+//        ContentResolver.requestSync(SunshineSyncAdapter.getSyncAccount(getActivity()), getString(R.string.content_authority), syncSettingsBundle);
+        SunshineSyncAdapter.syncImmediately(getActivity());
+
+    }
+
+    public void setUseSpecialLayout(boolean useSpecialLayout)
+    {
+        this.useSpecialLayout = useSpecialLayout;
+        if (forecastAdapter != null)
+        {
+            forecastAdapter.setUseSpecialViewType(this.useSpecialLayout);
+        }
     }
 
 }
